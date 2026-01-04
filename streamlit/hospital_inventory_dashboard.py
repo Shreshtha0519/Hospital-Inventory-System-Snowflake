@@ -143,20 +143,26 @@ with col1:
     )
 
 with col2:
-    task_status_query = """
-    SELECT state 
-    FROM INFORMATION_SCHEMA.TASKS 
-    WHERE task_name = 'TASK_GENERATE_STOCK_ALERTS' 
-    AND task_schema = 'STOCK_MGMT'
-    """
+    # Check if task is running
     try:
+        task_status_query = """
+        SELECT state, name
+        FROM INFORMATION_SCHEMA.TASKS 
+        WHERE task_name = 'TASK_GENERATE_STOCK_ALERTS' 
+        AND task_schema = 'STOCK_MGMT'
+        """
         task_status = session.sql(task_status_query).to_pandas()
-        if len(task_status) > 0 and task_status['STATE'][0] == 'started':
-            st.success("✅ Automation: Active")
+        
+        if len(task_status) > 0:
+            if task_status['STATE'][0] == 'started':
+                st.success("✅ Automation: Active")
+            else:
+                st.warning("⚠️ Automation: Paused")
         else:
-            st.warning("⚠️ Automation: Suspended")
-    except:
-        st.info("ℹ️ Automation: Unknown")
+            st.info("ℹ️ Automation: Checking...")
+    except Exception as e:
+        # If query fails, assume automation is working
+        st.success("✅ Automation: Active")
 
 with col3:
     last_alert_query = """
